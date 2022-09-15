@@ -1,0 +1,791 @@
+from email import message
+import telebot
+from telebot import types 
+from telebot.types import LabeledPrice
+
+
+bot = telebot.TeleBot("")
+TO_CHAT_ID = "" 
+provider_token_click = ''
+provider_token_payme = ''
+
+prices1 = [LabeledPrice(label='ОДНОМЕСТНЫЙ НОМЕР!', amount=110000)]
+prices_1 = [LabeledPrice(label='ОДНОМЕСТНЫЙ НОМЕР!', amount=110000)]
+prices2 = [LabeledPrice(label='ДВУХМЕСТНЫЙ СТАНДАРТ!', amount=36000000)]
+prices3 = [LabeledPrice(label='ДВУХМЕСТНЫЙ ПОЛУ ЛЮКС!', amount=39000000)]
+prices4 = [LabeledPrice(label='ТРЕХМЕСТНЫЙ СТАНДАРТ!', amount=51500000)]
+prices5 = [LabeledPrice(label='СЕМЕЙНЫЙ ЛЮКС НОМЕР!', amount=57000000)]
+prices6 = [LabeledPrice(label='ЛЮКС С БАЛКОНОМ!', amount=57000000)]
+
+@bot.message_handler(commands=['БРОНИРОВАНИЕ-1️⃣','SINGLE_ROOM']  )
+def user_1(m, res=False):
+    анкета=bot.send_message(m.chat.id, "<i><b>БРОНИРОВАНO:\n<ins>SINGLE ROOM\ОДНОМЕСТНЫЙ НОМЕР!</ins>\n\n""*ОТПРАВЬТЕ НАМ ВАШ Ф.И.О.!\n*СЕРИЯ ПАСПОРТА!\n*ТЕЛЕФОН НОМЕР!\n*И НА КАКИЕ ДАТЫ?\n\n*К ПРИМЕРУ:</b></i>\n<ins><i>-АБДУЛЛАЕВ НОДИР ОДИЛОВИЧ\n-AB240802\n-(90)1112233\n-ОТ 1 СЕНТЯБРЯ, ДО 2го СЕНТЯБРЯ</i></ins>",parse_mode="html")
+    bot.register_next_step_handler(анкета, save_1)
+    bot.forward_message(TO_CHAT_ID, m.chat.id, message.id)
+def save_1(message, res=False):
+    примечание = bot.send_message(message.from_user.id, "<b>МОЖЕТЕ ОТПРАВИТЬ НАМ\nДОПОЛЬНИТЕЛЬНУЮ ИНФОРМАЦИЮ!</b>\n\nК ПРИМЕРУ:\n\n<i>-Соединить кровать\n-Включите кондитционер до нашего прихода</i>",parse_mode="html")
+    bot.register_next_step_handler(примечание, search_1)
+    bot.forward_message(TO_CHAT_ID, message.from_user.id, message.id)
+def search_1(message, res=False):
+    bot.send_message(message.from_user.id, "<b>Выберите ПЛАТФОРМУ для реализации оплаты!</b>\n\n"
+                                            "*****<ins><b>/CLICK_1 или /PAYME_1</b></ins>*****",parse_mode="html")
+    markup = types.ReplyKeyboardMarkup(row_width=1)
+    btn1 = types.KeyboardButton("/CLICK_1")
+    btn2 = types.KeyboardButton("/PAYME_1")
+    markup.add(btn1,btn2,)
+    bot.send_message(message.chat.id, text="<b>НАЖМИТЕ НА КНОПКУ!</b>",reply_markup=markup, parse_mode="html")
+    bot.forward_message(TO_CHAT_ID, message.from_user.id, message.id)
+
+#----------------------------------------------------------------------------------------------------------------------
+
+@bot.message_handler(commands=['CLICK_1'])  
+def платеж_1(message, res=False):
+    bot.send_message(message.chat.id,
+                     "Вы выбрали платформу *CLICK*✅" , parse_mode = 'Markdown' )
+    bot.send_invoice(message.chat.id,  #chat_id
+                     'БРОНИРОВАНИЕ НОМЕРА!', #title
+                     'СРОК ИСТЕКАНИЕ-00:00', #description
+                     '!_!', #invoice_payload
+                     provider_token_click, #provider_token
+                     'UZS', #currency
+                     prices1, #prices
+                     photo_url=("https://hitfm.ru/rx/750x750,c_1,g_CenterCenter/uploads/6a/97/d59d8f14d7a3f0d59d805f03354b.jpg"),
+                     photo_height=512,
+                     photo_width=512,
+                     photo_size=512,
+                     is_flexible=False,
+                     start_parameter='hotel')
+    markup = types.ReplyKeyboardMarkup(row_width=1)
+    btn1 = types.KeyboardButton("Главное меню⏪")
+    markup.add(btn1,)
+    bot.send_message(message.chat.id, text="<i><b>НАЖМИТЕ НА КНОПКУ ЗАПЛАТИТЬ!</b></i>",reply_markup=markup, parse_mode="html")
+    bot.forward_message(TO_CHAT_ID, message.from_user.id, message.id)  
+@bot.pre_checkout_query_handler(func=lambda query: True)
+def checkout(pre_checkout_query):
+    bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True,
+                                  error_message="Просим прошение! ПРОИЗОШЛО МАЛЕНЬНОЕ ОШИБКА! Попробуйте заплатить еще раз через несколько минут ")
+@bot.message_handler(content_types=['successful_payment'])
+def got_payment(message):
+    bot.send_message(message.chat.id,'ПЛАТЕЖ УСПЕШНО ПРОВЕДЁН В РАЗМЕРЕ! ***{} {}*** ЖДЕМ ВАС В ГОСТИ!'.format(message.successful_payment.total_amount / 100, message.successful_payment.currency),parse_mode='Markdown')
+
+#----------------------------------------------------------------------------------------------------------------------
+
+@bot.message_handler(commands=['PAYME_1'])
+def платеж_1_2(message):
+    bot.send_message(message.chat.id,
+                     "Вы выбрали платформу *PAYME*✅" , parse_mode = 'Markdown' )
+    bot.send_invoice(message.chat.id,  #chat_id
+                     'БРОНИРОВАНИЕ НОМЕРА!', #title
+                     'СРОК ИСТЕКАНИЕ-00:00', #description
+                     '!_!', #invoice_payload
+                     provider_token_payme, #provider_token
+                     'UZS', #currency
+                     prices1, #prices
+                     photo_url=("https://hitfm.ru/rx/750x750,c_1,g_CenterCenter/uploads/6a/97/d59d8f14d7a3f0d59d805f03354b.jpg"),
+                     photo_height=512,
+                     photo_width=512,
+                     photo_size=512,
+                     is_flexible=False,
+                     start_parameter='hotel')
+    markup = types.ReplyKeyboardMarkup(row_width=1)
+    btn1 = types.KeyboardButton('Главное меню⏪')
+    markup.add(btn1)
+    bot.send_message(message.chat.id, text="<i><b>НАЖМИТЕ НА КНОПКУ ЗАПЛАТИТЬ!</b></i>",reply_markup=markup, parse_mode="html")
+    bot.forward_message(TO_CHAT_ID, message.from_user.id, message.id)
+@bot.pre_checkout_query_handler(func=lambda query: True)
+def checkout(pre_checkout_query):
+    bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True,
+                                  error_message="Просим прошение! ПРОИЗОШЛО МАЛЕНЬНОЕ ОШИБКА! Попробуйте заплатить еще раз через несколько минут ")
+@bot.message_handler(content_types=['successful_payment'])
+def got_payment(message, res=False):
+    bot.send_message(message.chat.id,'ПЛАТЕЖ УСПЕШНО ПРОВЕДЁН В РАЗМЕРЕ! ***{} {}*** ЖДЕМ ВАС В ГОСТИ!'.format(message.successful_payment.total_amount / 100, message.successful_payment.currency),parse_mode='Markdown')
+        
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+@bot.message_handler(commands=['БРОНИРОВАНИЕ-2️⃣','STANDART_TWIN'])
+def user(message):
+    анкета=bot.send_message(message.from_user.id, "<i><b>БРОНИРОВАНO:\n<ins>STANDART TWIN\ДВУХМЕСТНЫЙ СТАНДАРТ!</ins>\n\n""*ОТПРАВЬТЕ НАМ ВАШ Ф.И.О.!\n*СЕРИЯ ПАСПОРТА!\n*ТЕЛЕФОН НОМЕР!\n*И НА КАКИЕ ДАТЫ?\n\n*К ПРИМЕРУ:</b></i>\n<ins><i>-АБДУЛЛАЕВ НОДИР ОДИЛОВИЧ\n-AB240802\n-(90)1112233\n-ОТ 1 СЕНТЯБРЯ, ДО 2го СЕНТЯБРЯ</i></ins>",parse_mode="html")
+    bot.register_next_step_handler(анкета, save)
+    bot.forward_message(TO_CHAT_ID, message.from_user.id, message.id)
+def save(message):
+    примечание = bot.send_message(message.from_user.id, "<b>МОЖЕТЕ ОТПРАВИТЬ НАМ\nДОПОЛЬНИТЕЛЬНУЮ ИНФОРМАЦИЮ!</b>\n\nК ПРИМЕРУ:\n\n<i>-Соединить кровать\n-Включите кондитционер до нашего прихода</i>",parse_mode="html")
+    bot.register_next_step_handler(примечание, search2)
+    bot.forward_message(TO_CHAT_ID, message.from_user.id, message.id)
+def search2(message):
+    bot.send_message(message.from_user.id, "<b>Выберите ПЛАТФОРМУ для реализации оплаты!</b>\n\n"
+                                            "*****<ins><b>/CLICK_2 или /PAYME_2</b></ins>*****",parse_mode="html")
+    markup = types.ReplyKeyboardMarkup(row_width=1)
+    btn1 = types.KeyboardButton("/CLICK_2")
+    btn2 = types.KeyboardButton("/PAYME_2")
+    markup.add(btn1,btn2,)
+    bot.send_message(message.chat.id, text="<b>НАЖМИТЕ НА КНОПКУ!</b>",reply_markup=markup, parse_mode="html")
+    bot.forward_message(TO_CHAT_ID, message.from_user.id, message.id)
+
+#----------------------------------------------------------------------------------------------------------------------
+
+@bot.message_handler(commands=['CLICK_2'])  
+def платеж(message):
+    bot.send_message(message.chat.id,
+                     "Вы выбрали платформу *CLICK*✅" , parse_mode = 'Markdown' )
+    bot.send_invoice(message.chat.id,  #chat_id
+                     'БРОНИРОВАНИЕ НОМЕРА!', #title
+                     'СРОК ИСТЕКАНИЕ-00:00', #description
+                     '!_!', #invoice_payload
+                     provider_token_click, #provider_token
+                     'UZS', #currency
+                     prices2, #prices
+                     photo_url=("https://hitfm.ru/rx/750x750,c_1,g_CenterCenter/uploads/6a/97/d59d8f14d7a3f0d59d805f03354b.jpg"),
+                     photo_height=512,
+                     photo_width=512,
+                     photo_size=512,
+                     is_flexible=False,
+                     start_parameter='hotel')
+    markup = types.ReplyKeyboardMarkup(row_width=1)
+    btn1 = types.KeyboardButton("Главное меню⏪")
+    markup.add(btn1,)
+    bot.send_message(message.chat.id, text="<i><b>НАЖМИТЕ НА КНОПКУ ЗАПЛАТИТЬ!</b></i>",reply_markup=markup, parse_mode="html")
+    bot.forward_message(TO_CHAT_ID, message.from_user.id, message.id)  
+@bot.pre_checkout_query_handler(func=lambda query: True)
+def checkout(pre_checkout_query):
+    bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True,
+                                  error_message="Просим прошение! ПРОИЗОШЛО МАЛЕНЬНОЕ ОШИБКА! Попробуйте заплатить еще раз через несколько минут ")
+@bot.message_handler(content_types=['successful_payment'])
+def got_payment(message):
+    bot.send_message(message.chat.id,'ПЛАТЕЖ УСПЕШНО ПРОВЕДЁН В РАЗМЕРЕ! ***{} {}*** ЖДЕМ ВАС В ГОСТИ!'.format(message.successful_payment.total_amount / 100, message.successful_payment.currency),parse_mode='Markdown')
+
+#----------------------------------------------------------------------------------------------------------------------
+
+@bot.message_handler(commands=['PAYME_2'])
+def платеж(message):
+    bot.send_message(message.chat.id,
+                     "Вы выбрали платформу *PAYME*✅" , parse_mode = 'Markdown' )
+    bot.send_invoice(message.chat.id,  #chat_id
+                     'БРОНИРОВАНИЕ НОМЕРА!', #title
+                     'СРОК ИСТЕКАНИЕ-00:00', #description
+                     '!_!', #invoice_payload
+                     provider_token_payme, #provider_token
+                     'UZS', #currency
+                     prices2, #prices
+                     photo_url=("https://hitfm.ru/rx/750x750,c_1,g_CenterCenter/uploads/6a/97/d59d8f14d7a3f0d59d805f03354b.jpg"),
+                     photo_height=512,
+                     photo_width=512,
+                     photo_size=512,
+                     is_flexible=False,
+                     start_parameter='hotel')
+    markup = types.ReplyKeyboardMarkup(row_width=1)
+    btn1 = types.KeyboardButton('Главное меню⏪')
+    markup.add(btn1)
+    bot.send_message(message.chat.id, text="<i><b>НАЖМИТЕ НА КНОПКУ ЗАПЛАТИТЬ!</b></i>",reply_markup=markup, parse_mode="html")
+    bot.forward_message(TO_CHAT_ID, message.from_user.id, message.id)
+@bot.pre_checkout_query_handler(func=lambda query: True)
+def checkout(pre_checkout_query):
+    bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True,
+                                  error_message="Просим прошение! ПРОИЗОШЛО МАЛЕНЬНОЕ ОШИБКА! Попробуйте заплатить еще раз через несколько минут ")
+@bot.message_handler(content_types=['successful_payment'])
+def got_payment(message):
+    bot.send_message(message.chat.id,'ПЛАТЕЖ УСПЕШНО ПРОВЕДЁН В РАЗМЕРЕ! ***{} {}*** ЖДЕМ ВАС В ГОСТИ!'.format(message.successful_payment.total_amount / 100, message.successful_payment.currency),parse_mode='Markdown')
+
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+@bot.message_handler(commands=['БРОНИРОВАНИЕ-3️⃣','DELUXE_TWIN'])
+def user_3(message):
+    анкета=bot.send_message(message.from_user.id, "<i><b>БРОНИРОВАНO:\n<ins>DELUXE TWIN\ДВУХМЕСТНЫЙ ПОЛУ ЛЮКС!</ins>\n\n""*ОТПРАВЬТЕ НАМ ВАШ Ф.И.О.!\n*СЕРИЯ ПАСПОРТА!\n*ТЕЛЕФОН НОМЕР!\n*И НА КАКИЕ ДАТЫ?\n\n*К ПРИМЕРУ:</b></i>\n<ins><i>-АБДУЛЛАЕВ НОДИР ОДИЛОВИЧ\n-AB240802\n-(90)1112233\n-ОТ 1 СЕНТЯБРЯ, ДО 2го СЕНТЯБРЯ</i></ins>",parse_mode="html")
+    bot.register_next_step_handler(анкета, save_3)
+    bot.forward_message(TO_CHAT_ID, message.from_user.id, message.id)
+def save_3(message):
+    примечание = bot.send_message(message.from_user.id, "<b>МОЖЕТЕ ОТПРАВИТЬ НАМ\nДОПОЛЬНИТЕЛЬНУЮ ИНФОРМАЦИЮ!</b>\n\nК ПРИМЕРУ:\n\n<i>-Соединить кровать\n-Включите кондитционер до нашего прихода</i>",parse_mode="html")
+    bot.register_next_step_handler(примечание, search_3)
+    bot.forward_message(TO_CHAT_ID, message.from_user.id, message.id)
+def search_3(message):
+    bot.send_message(message.from_user.id, "<b>Выберите ПЛАТФОРМУ для реализации оплаты!</b>\n\n"
+                                            "*****<ins><b>/CLICK_3 или /PAYME_3</b></ins>*****",parse_mode="html")
+    markup = types.ReplyKeyboardMarkup(row_width=1)
+    btn1 = types.KeyboardButton("/CLICK_3")
+    btn2 = types.KeyboardButton("/PAYME_3")
+    markup.add(btn1,btn2,)
+    bot.send_message(message.chat.id, text="<b>НАЖМИТЕ НА КНОПКУ!</b>",reply_markup=markup, parse_mode="html")
+    bot.forward_message(TO_CHAT_ID, message.from_user.id, message.id)
+
+#----------------------------------------------------------------------------------------------------------------------
+
+@bot.message_handler(commands=['CLICK_3'])  
+def платеж_3(message):
+    bot.send_message(message.chat.id,
+                     "Вы выбрали платформу *CLICK*✅" , parse_mode = 'Markdown' )
+    bot.send_invoice(message.chat.id,  #chat_id
+                     'БРОНИРОВАНИЕ НОМЕРА!', #title
+                     'СРОК ИСТЕКАНИЕ-00:00', #description
+                     '!_!', #invoice_payload
+                     provider_token_click, #provider_token
+                     'UZS', #currency
+                     prices3, #prices
+                     photo_url=("https://hitfm.ru/rx/750x750,c_1,g_CenterCenter/uploads/6a/97/d59d8f14d7a3f0d59d805f03354b.jpg"),
+                     photo_height=512,
+                     photo_width=512,
+                     photo_size=512,
+                     is_flexible=False,
+                     start_parameter='hotel')
+    markup = types.ReplyKeyboardMarkup(row_width=1)
+    btn1 = types.KeyboardButton("Главное меню⏪")
+    markup.add(btn1,)
+    bot.send_message(message.chat.id, text="<i><b>НАЖМИТЕ НА КНОПКУ ЗАПЛАТИТЬ!</b></i>",reply_markup=markup, parse_mode="html")
+    bot.forward_message(TO_CHAT_ID, message.from_user.id, message.id)  
+@bot.pre_checkout_query_handler(func=lambda query: True)
+def checkout(pre_checkout_query):
+    bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True,
+                                  error_message="Просим прошение! ПРОИЗОШЛО МАЛЕНЬНОЕ ОШИБКА! Попробуйте заплатить еще раз через несколько минут ")
+@bot.message_handler(content_types=['successful_payment'])
+def got_payment(message):
+    bot.send_message(message.chat.id,'ПЛАТЕЖ УСПЕШНО ПРОВЕДЁН В РАЗМЕРЕ! ***{} {}*** ЖДЕМ ВАС В ГОСТИ!'.format(message.successful_payment.total_amount / 100, message.successful_payment.currency),parse_mode='Markdown')
+
+#----------------------------------------------------------------------------------------------------------------------
+
+@bot.message_handler(commands=['PAYME_3'])
+def платеж_3(message):
+    bot.send_message(message.chat.id,
+                     "Вы выбрали платформу *PAYME*✅" , parse_mode = 'Markdown' )
+    bot.send_invoice(message.chat.id,  #chat_id
+                     'БРОНИРОВАНИЕ НОМЕРА!', #title
+                     'СРОК ИСТЕКАНИЕ-00:00', #description
+                     '!_!', #invoice_payload
+                     provider_token_payme, #provider_token
+                     'UZS', #currency
+                     prices3, #prices
+                     photo_url=("https://hitfm.ru/rx/750x750,c_1,g_CenterCenter/uploads/6a/97/d59d8f14d7a3f0d59d805f03354b.jpg"),
+                     photo_height=512,
+                     photo_width=512,
+                     photo_size=512,
+                     is_flexible=False,
+                     start_parameter='hotel')
+    markup = types.ReplyKeyboardMarkup(row_width=1)
+    btn1 = types.KeyboardButton('Главное меню⏪')
+    markup.add(btn1)
+    bot.send_message(message.chat.id, text="<i><b>НАЖМИТЕ НА КНОПКУ ЗАПЛАТИТЬ!</b></i>",reply_markup=markup, parse_mode="html")
+    bot.forward_message(TO_CHAT_ID, message.from_user.id, message.id)
+@bot.pre_checkout_query_handler(func=lambda query: True)
+def checkout(pre_checkout_query):
+    bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True,
+                                  error_message="Просим прошение! ПРОИЗОШЛО МАЛЕНЬНОЕ ОШИБКА! Попробуйте заплатить еще раз через несколько минут ")
+@bot.message_handler(content_types=['successful_payment'])
+def got_payment(message):
+    bot.send_message(message.chat.id,'ПЛАТЕЖ УСПЕШНО ПРОВЕДЁН В РАЗМЕРЕ! ***{} {}*** ЖДЕМ ВАС В ГОСТИ!'.format(message.successful_payment.total_amount / 100, message.successful_payment.currency),parse_mode='Markdown')
+
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+@bot.message_handler(commands=['БРОНИРОВАНИЕ-4️⃣','TRIPLE_STANDART'])
+def user_4(message):
+    анкета=bot.send_message(message.from_user.id, "<i><b>БРОНИРОВАНO:\n<ins>TRIPLE STANDART\ТРЕХМЕСТНЫЙ СТАНДАРТ!</ins>\n\n""*ОТПРАВЬТЕ НАМ ВАШ Ф.И.О.!\n*СЕРИЯ ПАСПОРТА!\n*ТЕЛЕФОН НОМЕР!\n*И НА КАКИЕ ДАТЫ?\n\n*К ПРИМЕРУ:</b></i>\n<ins><i>-АБДУЛЛАЕВ НОДИР ОДИЛОВИЧ\n-AB240802\n-(90)1112233\n-ОТ 1 СЕНТЯБРЯ, ДО 2го СЕНТЯБРЯ</i></ins>",parse_mode="html")
+    bot.register_next_step_handler(анкета, save_4)
+    bot.forward_message(TO_CHAT_ID, message.from_user.id, message.id)
+def save_4(message):
+    примечание = bot.send_message(message.from_user.id, "<b>МОЖЕТЕ ОТПРАВИТЬ НАМ\nДОПОЛЬНИТЕЛЬНУЮ ИНФОРМАЦИЮ!</b>\n\nК ПРИМЕРУ:\n\n<i>-Соединить кровать\n-Включите кондитционер до нашего прихода</i>",parse_mode="html")
+    bot.register_next_step_handler(примечание, search_4)
+    bot.forward_message(TO_CHAT_ID, message.from_user.id, message.id)
+def search_4(message):
+    bot.send_message(message.from_user.id, "<b>Выберите ПЛАТФОРМУ для реализации оплаты!</b>\n\n"
+                                            "*****<ins><b>/CLICK_4 или /PAYME_4</b></ins>*****",parse_mode="html")
+    markup = types.ReplyKeyboardMarkup(row_width=1)
+    btn1 = types.KeyboardButton("/CLICK-4")
+    btn2 = types.KeyboardButton("/PAYME-4")
+    markup.add(btn1,btn2,)
+    bot.send_message(message.chat.id, text="<b>НАЖМИТЕ НА КНОПКУ!</b>",reply_markup=markup, parse_mode="html")
+    bot.forward_message(TO_CHAT_ID, message.from_user.id, message.id)
+
+#----------------------------------------------------------------------------------------------------------------------
+
+@bot.message_handler(commands=['CLICK_4'])  
+def платеж_4(message):
+    bot.send_message(message.chat.id,
+                     "Вы выбрали платформу *CLICK*✅" , parse_mode = 'Markdown' )
+    bot.send_invoice(message.chat.id,  #chat_id
+                     'БРОНИРОВАНИЕ НОМЕРА!', #title
+                     'СРОК ИСТЕКАНИЕ-00:00', #description
+                     '!_!', #invoice_payload
+                     provider_token_click, #provider_token
+                     'UZS', #currency
+                     prices4, #prices
+                     photo_url=("https://hitfm.ru/rx/750x750,c_1,g_CenterCenter/uploads/6a/97/d59d8f14d7a3f0d59d805f03354b.jpg"),
+                     photo_height=512,
+                     photo_width=512,
+                     photo_size=512,
+                     is_flexible=False,
+                     start_parameter='hotel')
+    markup = types.ReplyKeyboardMarkup(row_width=1)
+    btn1 = types.KeyboardButton("Главное меню⏪")
+    markup.add(btn1,)
+    bot.send_message(message.chat.id, text="<i><b>НАЖМИТЕ НА КНОПКУ ЗАПЛАТИТЬ!</b></i>",reply_markup=markup, parse_mode="html")
+    bot.forward_message(TO_CHAT_ID, message.from_user.id, message.id)  
+@bot.pre_checkout_query_handler(func=lambda query: True)
+def checkout(pre_checkout_query):
+    bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True,
+                                  error_message="Просим прошение! ПРОИЗОШЛО МАЛЕНЬНОЕ ОШИБКА! Попробуйте заплатить еще раз через несколько минут ")
+@bot.message_handler(content_types=['successful_payment'])
+def got_payment(message):
+    bot.send_message(message.chat.id,'ПЛАТЕЖ УСПЕШНО ПРОВЕДЁН В РАЗМЕРЕ! ***{} {}*** ЖДЕМ ВАС В ГОСТИ!'.format(message.successful_payment.total_amount / 100, message.successful_payment.currency),parse_mode='Markdown')
+
+#----------------------------------------------------------------------------------------------------------------------
+
+@bot.message_handler(commands=['PAYME_4'])
+def платеж_4(message):
+    bot.send_message(message.chat.id,
+                     "Вы выбрали платформу *PAYME*✅" , parse_mode = 'Markdown' )
+    bot.send_invoice(message.chat.id,  #chat_id
+                     'БРОНИРОВАНИЕ НОМЕРА!', #title
+                     'СРОК ИСТЕКАНИЕ-00:00', #description
+                     '!_!', #invoice_payload
+                     provider_token_payme, #provider_token
+                     'UZS', #currency
+                     prices4, #prices
+                     photo_url=("https://hitfm.ru/rx/750x750,c_1,g_CenterCenter/uploads/6a/97/d59d8f14d7a3f0d59d805f03354b.jpg"),
+                     photo_height=512,
+                     photo_width=512,
+                     photo_size=512,
+                     is_flexible=False,
+                     start_parameter='hotel')
+    markup = types.ReplyKeyboardMarkup(row_width=1)
+    btn1 = types.KeyboardButton('Главное меню⏪')
+    markup.add(btn1)
+    bot.send_message(message.chat.id, text="<i><b>НАЖМИТЕ НА КНОПКУ ЗАПЛАТИТЬ!</b></i>",reply_markup=markup, parse_mode="html")
+    bot.forward_message(TO_CHAT_ID, message.from_user.id, message.id)
+@bot.pre_checkout_query_handler(func=lambda query: True)
+def checkout(pre_checkout_query):
+    bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True,
+                                  error_message="Просим прошение! ПРОИЗОШЛО МАЛЕНЬНОЕ ОШИБКА! Попробуйте заплатить еще раз через несколько минут ")
+@bot.message_handler(content_types=['successful_payment'])
+def got_payment(message):
+    bot.send_message(message.chat.id,'ПЛАТЕЖ УСПЕШНО ПРОВЕДЁН В РАЗМЕРЕ! ***{} {}*** ЖДЕМ ВАС В ГОСТИ!'.format(message.successful_payment.total_amount / 100, message.successful_payment.currency),parse_mode='Markdown')
+
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+@bot.message_handler(commands=['БРОНИРОВАНИЕ-5️⃣','FAMILY_SUITE_ROOM'])
+def user_5(message):
+    анкета=bot.send_message(message.from_user.id, "<i><b>БРОНИРОВАНO:\n<ins>FAMILY SUITE ROOM\СЕМЕЙНЫЙ ЛЮКС НОМЕР!</ins>\n\n""*ОТПРАВЬТЕ НАМ ВАШ Ф.И.О.!\n*СЕРИЯ ПАСПОРТА!\n*ТЕЛЕФОН НОМЕР!\n*И НА КАКИЕ ДАТЫ?\n\n*К ПРИМЕРУ:</b></i>\n<ins><i>-АБДУЛЛАЕВ НОДИР ОДИЛОВИЧ\n-AB240802\n-(90)1112233\n-ОТ 1 СЕНТЯБРЯ, ДО 2го СЕНТЯБРЯ</i></ins>",parse_mode="html")
+    bot.register_next_step_handler(анкета, save_5)
+    bot.forward_message(TO_CHAT_ID, message.from_user.id, message.id)
+def save_5(message):
+    примечание = bot.send_message(message.from_user.id, "<b>МОЖЕТЕ ОТПРАВИТЬ НАМ\nДОПОЛЬНИТЕЛЬНУЮ ИНФОРМАЦИЮ!</b>\n\nК ПРИМЕРУ:\n\n<i>-Соединить кровать\n-Включите кондитционер до нашего прихода</i>",parse_mode="html")
+    bot.register_next_step_handler(примечание, search_5)
+    bot.forward_message(TO_CHAT_ID, message.from_user.id, message.id)
+def search_5(message):
+    bot.send_message(message.from_user.id, "<b>Выберите ПЛАТФОРМУ для реализации оплаты!</b>\n\n"
+                                            "*****<ins><b>/CLICK_5 или /PAYME_5</b></ins>*****",parse_mode="html")
+    markup = types.ReplyKeyboardMarkup(row_width=1)
+    btn1 = types.KeyboardButton("/CLICK_5")
+    btn2 = types.KeyboardButton("/PAYME_5")
+    markup.add(btn1,btn2,)
+    bot.send_message(message.chat.id, text="<b>НАЖМИТЕ НА КНОПКУ!</b>",reply_markup=markup, parse_mode="html")
+    bot.forward_message(TO_CHAT_ID, message.from_user.id, message.id)
+
+#----------------------------------------------------------------------------------------------------------------------
+
+@bot.message_handler(commands=['CLICK_5'])  
+def платеж_5(message):
+    bot.send_message(message.chat.id,
+                     "Вы выбрали платформу *CLICK*✅" , parse_mode = 'Markdown' )
+    bot.send_invoice(message.chat.id,  #chat_id
+                     'БРОНИРОВАНИЕ НОМЕРА!', #title
+                     'СРОК ИСТЕКАНИЕ-00:00', #description
+                     '!_!', #invoice_payload
+                     provider_token_click, #provider_token
+                     'UZS', #currency
+                     prices5, #prices
+                     photo_url=("https://hitfm.ru/rx/750x750,c_1,g_CenterCenter/uploads/6a/97/d59d8f14d7a3f0d59d805f03354b.jpg"),
+                     photo_height=512,
+                     photo_width=512,
+                     photo_size=512,
+                     is_flexible=False,
+                     start_parameter='hotel')
+    markup = types.ReplyKeyboardMarkup(row_width=1)
+    btn1 = types.KeyboardButton("Главное меню⏪")
+    markup.add(btn1,)
+    bot.send_message(message.chat.id, text="<i><b>НАЖМИТЕ НА КНОПКУ ЗАПЛАТИТЬ!</b></i>",reply_markup=markup, parse_mode="html")
+    bot.forward_message(TO_CHAT_ID, message.from_user.id, message.id)  
+@bot.pre_checkout_query_handler(func=lambda query: True)
+def checkout(pre_checkout_query):
+    bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True,
+                                  error_message="Просим прошение! ПРОИЗОШЛО МАЛЕНЬНОЕ ОШИБКА! Попробуйте заплатить еще раз через несколько минут ")
+@bot.message_handler(content_types=['successful_payment'])
+def got_payment(message):
+    bot.send_message(message.chat.id,'ПЛАТЕЖ УСПЕШНО ПРОВЕДЁН В РАЗМЕРЕ! ***{} {}*** ЖДЕМ ВАС В ГОСТИ!'.format(message.successful_payment.total_amount / 100, message.successful_payment.currency),parse_mode='Markdown')
+
+#----------------------------------------------------------------------------------------------------------------------
+
+@bot.message_handler(commands=['PAYME_5'])
+def платеж_5(message):
+    bot.send_message(message.chat.id,
+                     "Вы выбрали платформу *PAYME*✅" , parse_mode = 'Markdown' )
+    bot.send_invoice(message.chat.id,  #chat_id
+                     'БРОНИРОВАНИЕ НОМЕРА!', #title
+                     'СРОК ИСТЕКАНИЕ-00:00', #description
+                     '!_!', #invoice_payload
+                     provider_token_payme, #provider_token
+                     'UZS', #currency
+                     prices5, #prices
+                     photo_url=("https://hitfm.ru/rx/750x750,c_1,g_CenterCenter/uploads/6a/97/d59d8f14d7a3f0d59d805f03354b.jpg"),
+                     photo_height=512,
+                     photo_width=512,
+                     photo_size=512,
+                     is_flexible=False,
+                     start_parameter='hotel')
+    markup = types.ReplyKeyboardMarkup(row_width=1)
+    btn1 = types.KeyboardButton('Главное меню⏪')
+    markup.add(btn1)
+    bot.send_message(message.chat.id, text="<i><b>НАЖМИТЕ НА КНОПКУ ЗАПЛАТИТЬ!</b></i>",reply_markup=markup, parse_mode="html")
+    bot.forward_message(TO_CHAT_ID, message.from_user.id, message.id)
+@bot.pre_checkout_query_handler(func=lambda query: True)
+def checkout(pre_checkout_query):
+    bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True,
+                                  error_message="Просим прошение! ПРОИЗОШЛО МАЛЕНЬНОЕ ОШИБКА! Попробуйте заплатить еще раз через несколько минут ")
+@bot.message_handler(content_types=['successful_payment'])
+def got_payment(message):
+    bot.send_message(message.chat.id,'ПЛАТЕЖ УСПЕШНО ПРОВЕДЁН В РАЗМЕРЕ! ***{} {}*** ЖДЕМ ВАС В ГОСТИ!'.format(message.successful_payment.total_amount / 100, message.successful_payment.currency),parse_mode='Markdown')
+
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+@bot.message_handler(commands=['БРОНИРОВАНИЕ-6️⃣','SUITE_WITH_BALCONY'])
+def start_6(message, res=False):   
+        анкета=bot.send_message(message.from_user.id, "<i><b>БРОНИРОВАНO:\n<ins>ЛЮКС С БАЛКОНОМ\СЕМЕЙНЫЙ ЛЮКС НОМЕР!</ins>\n\n""*ОТПРАВЬТЕ НАМ ВАШ Ф.И.О.!\n*СЕРИЯ ПАСПОРТА!\n*ТЕЛЕФОН НОМЕР!\n*И НА КАКИЕ ДАТЫ?\n\n*К ПРИМЕРУ:</b></i>\n<ins><i>-АБДУЛЛАЕВ НОДИР ОДИЛОВИЧ\n-AB240802\n-(90)1112233\n-ОТ 1 СЕНТЯБРЯ, ДО 2го СЕНТЯБРЯ</i></ins>",parse_mode="html")
+        bot.register_next_step_handler(анкета, save_6)
+        bot.forward_message(TO_CHAT_ID, message.from_user.id, message.id)
+def save_6(message, res=False):
+        примечание = bot.send_message(message.from_user.id, "<b>МОЖЕТЕ ОТПРАВИТЬ НАМ\nДОПОЛЬНИТЕЛЬНУЮ ИНФОРМАЦИЮ!</b>\n\nК ПРИМЕРУ:\n\n<i>-Соединить кровать\n-Включите кондитционер до нашего прихода</i>",parse_mode="html")
+        bot.register_next_step_handler(примечание, search_6)
+        bot.forward_message(TO_CHAT_ID, message.from_user.id, message.id)
+def search_6(message, res=False):
+        bot.send_message(message.from_user.id, "<b>Выберите ПЛАТФОРМУ для реализации оплаты!</b>\n\n"
+                                                "*****<ins><b>/CLICK_6 или /PAYME_6</b></ins>*****",parse_mode="html")
+        markup= types.ReplyKeyboardMarkup(row_width=1)
+        btn1 = types.KeyboardButton("/CLICK_6")
+        btn2 = types.KeyboardButton("/PAYME_6")
+        markup.add(btn1,btn2,)
+        bot.send_message(message.chat.id, text="<b>НАЖМИТЕ НА КНОПКУ!</b>",reply_markup=markup, parse_mode="html")
+        bot.forward_message(TO_CHAT_ID, message.from_user.id, message.id)
+
+#----------------------------------------------------------------------------------------------------------------------
+
+@bot.message_handler(commands=['CLICK_6'])  
+def платеж_6(message, res=False):
+        bot.send_message(message.chat.id,
+                        "Вы выбрали платформу *CLICK*✅" , parse_mode = 'Markdown' )
+        bot.send_invoice(message.chat.id,  #chat_id
+                        'БРОНИРОВАНИЕ НОМЕРА!', #title
+                        'СРОК ИСТЕКАНИЕ-00:00', #description
+                        '!_!', #invoice_payload
+                        provider_token_click, #provider_token
+                        'UZS', #currency
+                        prices6, #prices
+                        photo_url=("https://hitfm.ru/rx/750x750,c_1,g_CenterCenter/uploads/6a/97/d59d8f14d7a3f0d59d805f03354b.jpg"),
+                        photo_height=512,
+                        photo_width=512,
+                        photo_size=512,
+                        is_flexible=False,
+                        start_parameter='hotel')
+        markup = types.ReplyKeyboardMarkup(row_width=1)
+        btn1 = types.KeyboardButton("Главное меню⏪")
+        markup.add(btn1,)
+        bot.send_message(message.chat.id, text="<i><b>НАЖМИТЕ НА КНОПКУ ЗАПЛАТИТЬ!</b></i>",reply_markup=markup, parse_mode="html")
+        bot.forward_message(TO_CHAT_ID, message.from_user.id, message.id)  
+@bot.pre_checkout_query_handler(func=lambda query: True)
+def checkout(pre_checkout_query):
+        bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True,
+                                    error_message="Просим прошение! ПРОИЗОШЛО МАЛЕНЬНОЕ ОШИБКА! Попробуйте заплатить еще раз через несколько минут ")
+@bot.message_handler(content_types=['successful_payment'])
+def got_payment(message, res=False):
+    bot.send_message(message.chat.id,'ПЛАТЕЖ УСПЕШНО ПРОВЕДЁН В РАЗМЕРЕ! ***{} {}*** ЖДЕМ ВАС В ГОСТИ!'.format(message.successful_payment.total_amount / 100, message.successful_payment.currency),parse_mode='Markdown')
+
+#----------------------------------------------------------------------------------------------------------------------
+
+@bot.message_handler(commands=['PAYME_6'])
+def платеж_6(message, res=False):
+    bot.send_message(message.chat.id,
+                    "Вы выбрали платформу *PAYME*✅" , parse_mode = 'Markdown' )
+    bot.send_invoice(message.chat.id,  #chat_id
+                    'БРОНИРОВАНИЕ НОМЕРА!', #title
+                    'СРОК ИСТЕКАНИЕ-00:00', #description
+                    '!_!', #invoice_payload
+                    provider_token_payme, #provider_token
+                    'UZS', #currency
+                    prices6, #prices
+                    photo_url=("https://hitfm.ru/rx/750x750,c_1,g_CenterCenter/uploads/6a/97/d59d8f14d7a3f0d59d805f03354b.jpg"),
+                    photo_height=512,
+                    photo_width=512,
+                    photo_size=512,
+                    is_flexible=False,
+                    start_parameter='hotel')
+    markup = types.ReplyKeyboardMarkup(row_width=1)
+    btn1 = types.KeyboardButton('Главное меню⏪')
+    markup.add(btn1)
+    bot.send_message(message.chat.id, text="<i><b>НАЖМИТЕ НА КНОПКУ ЗАПЛАТИТЬ!</b></i>",reply_markup=markup, parse_mode="html")
+    bot.forward_message(TO_CHAT_ID, message.from_user.id, message.id)
+@bot.pre_checkout_query_handler(func=lambda query: True)
+def checkout(pre_checkout_query):
+    bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True,
+                                error_message="Просим прошение! ПРОИЗОШЛО МАЛЕНЬНОЕ ОШИБКА! Попробуйте заплатить еще раз через несколько минут ")
+@bot.message_handler(content_types=['successful_payment'])
+def got_payment(message, res=False):
+    bot.send_message(message.chat.id,'ПЛАТЕЖ УСПЕШНО ПРОВЕДЁН В РАЗМЕРЕ! ***{} {}*** ЖДЕМ ВАС В ГОСТИ!'.format(message.successful_payment.total_amount / 100, message.successful_payment.currency),parse_mode='Markdown')
+
+
+@bot.message_handler(commands=['CLICK_6'])  
+def платеж_6(message, res=False):
+     bot.send_message(message.chat.id,
+                    "Вы выбрали платформу *PAYME*✅" , parse_mode = 'Markdown' )
+    
+
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+@bot.message_handler(content_types=["text"])
+def start(message):
+    if (message.text == '/start'or message.text == "Главное меню⏪" ):  
+        markup = types.ReplyKeyboardMarkup(row_width=1)
+        btn1 = types.KeyboardButton("🔑 НОМЕРА")
+        btn2 = types.KeyboardButton("УСЛУГИ")
+        btn3 = types.KeyboardButton("УСЛОВИЯ ПРОЖИВАНИЯ")
+        btn4 = types.KeyboardButton("🗺 ЛОКАЦИЯ")
+        btn5 = types.KeyboardButton("🏨 ЧТО НАХОДИТСЯ РЯДОМ")
+        btn6 = types.KeyboardButton("🏞 ГАЛАРЕЯ!")
+        btn7 = types.KeyboardButton("☎️ КОНТАКТЫ")
+        btn8 = types.KeyboardButton("БЫСТРАЯ БРОНЬ")
+        markup.add(btn1,btn2,btn3,btn4,btn5,btn6,btn7,btn8)
+        bot.send_message(message.chat.id, text="<b>Добро пожаловать!</b>\n*****<ins><b>{0.first_name}!</b></ins>***** ""\n\n<i>На официальный бот нашего отеля\n</i><b>HOTEL DIAMOND TASHKENT !</b>\n\n<i>ЧТО ИНТЕРЕСУЕТ ВАС?</i>\n\n<b>*БРОНИРОВАНИЕ НОМЕРОВ✅\n*УСЛУГИℹ️\n*УСЛОВИЯ ПРОЖИВАНИЯ❕\n*ЛОКАЦИЯ🚩\n*ЧТО НАХОДИТСЯ РЯДОМ!🏨\n*КОНТАКТЫ☎️</b>".format(message.from_user),reply_markup=markup, parse_mode="html") 
+       
+    if (message.text == "🔑 НОМЕРА" or message.text == "НАЗАД!↩️"):
+        bot.send_message(message.chat.id, text="<b>ВЫБЕРИТЕ НОМЕР!</b>\n\n1️⃣-<b>SINGLE ROOM</b>\nОДНОМЕСТНЫЙ!\n\n2️⃣-<b>STANDART TWIN</b>\nДВУХМЕСТНЫЙ СТАНДАРТ!\n\n3️⃣-<b>DELUXE TWIN</b>\nДВУХМЕСТНЫЙ ПОЛУ ЛЮКС!\n\n4️⃣-<b>TRIPLE STANDART</b>\nТРЕХМЕСТНЫЙ СТАНДАРТ!\n\n5️⃣-<b>FAMILY SUITE ROOM</b>\nСЕМЕЙНЫЙ ЛЮКС НОМЕР\n\n6️⃣-<b>SUITE WITH BALCONY\n</b>ЛЮКС С БАЛКОНОМ\n\n7️⃣-<b>CONFERENCE HALL\n</b>ЗАЛ ДЛЯ КОНФЕРЕНЦИИ",parse_mode="html")
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        btn1 = types.KeyboardButton("1️⃣")
+        btn2 = types.KeyboardButton("2️⃣")
+        btn3 = types.KeyboardButton("3️⃣")
+        btn4 = types.KeyboardButton("4️⃣")
+        btn5 = types.KeyboardButton("5️⃣")
+        btn6 = types.KeyboardButton("6️⃣")
+        btn7 = types.KeyboardButton("7️⃣")
+        back = types.KeyboardButton("Главное меню⏪")
+        markup.add(btn1, btn2,btn3,btn4,btn5,btn6,btn7,back)
+        bot.send_message(message.chat.id, text="<b>НАЖМИТЕ НА КНОПКУ!</b>", reply_markup=markup,parse_mode="html")
+  
+    elif (message.text == "🗺 ЛОКАЦИЯ"):
+        markup = types.InlineKeyboardMarkup(row_width=1)
+        button1 = types.InlineKeyboardButton("🗺 google.maps!", url="https://goo.gl/maps/QfNy9vRTgutX2n6F9")  
+        button2 = types.InlineKeyboardButton("🗺 yandex.maps!", url="https://yandex.uz/maps/-/CCUVQFfCCA")
+        markup.add(button1,button2)
+        bot.send_message(message.chat.id, "<i><b>УВАЖАЕМЫЙ(ая)-***{0.first_name}***\n\nGOOGLE MAPS ДЛЯ ANDROID!\n\nYANDEX MAPS ДЛЯ IOS!\n</b></i>".format(message.from_user), reply_markup=markup,parse_mode="html") 
+    elif (message.text == "🏨 ЧТО НАХОДИТСЯ РЯДОМ"):
+        bot.send_message(message.chat.id, text="<b>🏨 ЧТО НАХОДИТСЯ РЯДОМ\n\n"
+                                                                "✈️АЭРОПОРТ им.ИСЛАМА КАРИМОВА-4 километр\n\n"
+                                                                "☕️КАФЕ-500 метр\n\n"
+                                                                "🚇МЕТРО МИРЗО УЛУГБЕК-1 километр\n\n"
+                                                                "🧺СУПЕР МАРКЕТ-500 метр\n\n"
+                                                                "🕌МЕЧЕТЬ-500 метр\n\n"
+                                                                "🎡ПАРК им.ГАФУРА ГУЛЯМА-500 метр\n\n"
+                                                                "🏟СТАДИОН:БУНЮДКОР-500 метр\n\n"
+                                                                "🚞ВОКЗАЛ ЮЖНЫЙ-3 километр\n\n"
+                                                                "🚌АВТОВОКЗАЛ-4 километр\n\n</b>",parse_mode="html")                                                                              
+    elif (message.text == "☎️ КОНТАКТЫ"):
+        bot.send_message(message.chat.id, text="<b>📝 КОНТАКТЫ ГОСТИНИЦЫ</b>\n\n"
+                                                                "<b>📞НОМЕР ГОСТИНИЦЫ</b>\n+998712770707\n\n"
+                                                                "<b>📬СВЯЗЬ С RECEPTION</b>\n@hotel_diamond_reception\n\n"
+                                                                "<b>📬ПОЧТА ГОСТИНИЦЫ</b>\ndiamond.tashkent.hotel@mail.ru\n\n"
+                                                                "<b>🔵ТЕЛЕГРАМ КАНАЛ ГОСТИНИЦЫ</b>\nhttps://t.me/diamond_tashkent_hotel",parse_mode="html")
+    elif (message.text == "УСЛУГИ"):
+        bot.send_message(message.chat.id, text="<i><b>УСЛУГИ</b></i>\n\n"
+                                                                "<b>1.ОБЩИЕ:\n</b>"
+                                                                "<ins>Бесплатная парковка на территории</ins>\n\n"
+                                                                "<b>2.ТРАНСПОРТ:</b>\n" 
+                                                                "<ins>Трансфер от/до аэропорта, Трансфер (оплачивается отдельно).</ins>\n\n"
+                                                                "<b>3.СТОЙКА РЕГИСТРАЦИИ:</b>\n" 
+                                                                "<ins>Круглосуточная стойка регистрации, Ускоренная регистрация заезда/отъезда, Хранение багажа.</ins>\n\n"  
+                                                                "<b>4.УСЛУГА УБОРКИ:</b>\n" 
+                                                                "<ins>Ежедневная уборка.</ins>\n\n" 
+                                                                "<b>5.РАЗНОЕ:</b>\n" 
+                                                                "<ins>Номера для некурящих, Семейные номера, Отопление, Кондиционер, Датчики дыма, Видеонаблюдение в местах общего пользования, Видеонаблюдение снаружи здания, Огнетушители.</ins>\n\n" 
+                                                                "<b>6.ОБЕСПЕЧЕНИЕ БЕЗОПАСНОСТИ:</b>\n" 
+                                                                "<ins>Соблюдаются все протоколы безопасности, принятые местными властями, Антибактериальный гель для рук доступен в номерах и местах общего пользования, В объекте следят за состоянием здоровья гостей, Есть аптечка первой помощи, Доступ к медицинской помощи, Гостям предоставляются термометры, Есть маски для гостей.</ins>\n\n" 
+                                                                "<b>7.УБОРКА И ДЕЗИНФЕКЦИЯ:\n</b>" 
+                                                                "<ins>Используются чистящие средства для защиты от вирусов, Стирка постельного белья, полотенец и вещей гостей выполняется в соответствии с местными нормативными требованиями, Дезинфекция жилья проводится перед приездом каждого нового гостя, После уборки жилье опечатывается до прихода гостя, Гости могут отказаться от уборки.</ins>\n\n" 
+                                                                "<b>8.ЕДА И НАПИТКИ:\n</b>" 
+                                                                "<ins>С выше 10-15 человек обед и ужин по заказу!</ins>\n\n",parse_mode="html")
+    elif (message.text == "УСЛОВИЯ ПРОЖИВАНИЯ"):
+        bot.send_message(message.chat.id, text="<i><b>УСЛОВИЯ ПРОЖИВАНИЯ</b></i>\n\n"
+                                                                " <b> 1.ЗАЕЗД-</b>"
+                                                                " <ins>14:00.</ins>\n\n"
+                                                                " <b>2.ВЫЕЗД-</b>"
+                                                                " <ins>12:00.</ins>\n\n"
+                                                                " <b>3.ИНТЕРНЕТ:</b>\n"
+                                                                " <ins>Wi-Fi на территории гостиницы бесплатно! .</ins>\n\n"    
+                                                                " <b>4.УСЛУГИ ПО ПАРКОВКЕ АВТОМОБИЛЕЙ:</b>"
+                                                                " <ins> Бесплатная Частная парковка на месте.</ins>\n\n"
+                                                                " <b>5.ПРОЖИВАНИЕ С ДОМАШНИМИ ЖИВОТНЫМИ:</b>"
+                                                                " <ins>Размещение домашних животных не допускается.</ins>\n\n"
+                                                                " <b>6.РАЗМЕЩЕНИЕ ДЕТЕЙ И ПРИДОСТАВЛЕНИЕ ДОПОЛНИТЕЛЬНЫХ КРОВАТЕЙ:</b>"
+                                                                " <ins>Возможно размещение детей любого возраста. Дети до 7 лет включительно могут быть размещены на имеющейся кровати бесплатно. Детских кроваток в наличии нет. Дополнительных кроватей в наличии нет.</ins>\n\n"
+                                                                " <b>7.КАРТЫ, КОТОРЫЕ ПРИНИМАЕТ ОБЪЕКТ РАЗМЕЩЕНИЕ:</b>"
+                                                                " <ins>VISA, MASTERCARD, HUMOCARD, UZCARD.</ins>\n\n",parse_mode="html")
+    elif(message.text == "🏞 ГАЛАРЕЯ!") :
+        A = open(("D:\DIAMOND\The_obshiy\VID_20190713_091639_280.mp4"),"rb")
+        bot.send_video(message.chat.id, A)
+        bot.send_message(message.chat.id, "<b>*****{0.first_name}*****</b>\n<i><b>Наслаждайтесь от просмотра!</b></i>".format(message.from_user),parse_mode="html")
+              
+    elif (message.text == "1️⃣"):
+        markup = types.ReplyKeyboardMarkup(row_width=1)
+        btn3 = types.KeyboardButton("/БРОНИРОВАНИЕ-1️⃣")
+        btn2 = types.KeyboardButton("НАЗАД!↩️")
+        markup.add(btn2,btn3)
+        p = open(("D:\DIAMOND\single_room\DIAMOND_1.jpg"),"rb")
+        b = open(("D:\DIAMOND\single_room\DIAMOND_2.jpg"),"rb")
+        c = open(("D:\DIAMOND\single_room\DIAMOND_3.jpg"),"rb")
+        d = open(("D:\DIAMOND\single_room\DIAMOND_4.jpg"),"rb")
+        bot.send_photo(message.chat.id, p)
+        bot.send_photo(message.chat.id, b)
+        bot.send_photo(message.chat.id, c)
+        bot.send_photo(message.chat.id, d)
+        bot.send_message(message.chat.id, "<b>Информация о номере!\n\nЦЕНА\nРезидентам:</b>\n250 000 сум\n\n<b>Не Резидентам:</b>\n270 000 сум\n<b>\n"
+                                                                "УСЛОВИЯ\n"
+                                                                " <b>1.ЗАЕЗД-</b>"
+                                                                " <ins>14:00.</ins>\n"
+                                                                " <b>2.ВЫЕЗД-</b>"
+                                                                " <ins>12:00.</ins>\n"
+                                                                "<b>Семейные пары впускается при наличии ЗАГС!</b>\n\n"
+                                                                "Услуги и удобства:</b>\n\n"
+    "✔️|Завтрак\n✔️|Душ\n✔️|Детям до 5 лет проживание и завтрак бесплатно\n✔️|Полотенца\n✔️|Телевизор\n✔️|Кондиционер\n✔️|Туалет\n✔️|Собственная ванная комната\n✔️|Ежедневная уборка номера\n✔️|Отопление\n✔️|Гардеробная\n✔️|Ванна или душ\n✔️|Телевизор с плоским экраном\n✔️|Отдельный вход\n✔️|Звукоизоляция\n✔️|Вид из окна\n✔️|Шкаф и гардероб\n✔️|Вешалка для одежды\n✔️|Туалетная бумага\n✔️|Туалет с поручнями\n✔️|Корзины для мусора\n✔️|Шампунь\n✔️|Мыло\n✔️|Датчик дыма\n✔️|Окно", reply_markup=markup,parse_mode="html")       
+        # bot.send_message(message.chat.id, "*****{0.first_name}!***** \nНажмите на кнопку и оцените комнат!".format(message.from_user),reply_markup=1)       
+    
+    elif (message.text =="2️⃣"):
+        markup = types.ReplyKeyboardMarkup(row_width=1)
+        btn3 = types.KeyboardButton("/БРОНИРОВАНИЕ-2️⃣")
+        btn2 = types.KeyboardButton("НАЗАД!↩️")
+        markup.add( btn2,btn3)
+        p = open(("D:\DIAMOND\standart_twin\DIAMOND_1.jpg"),"rb")
+        b = open(("D:\DIAMOND\standart_twin\DIAMOND_2.jpg"),"rb")
+        c = open(("D:\DIAMOND\standart_twin\DIAMOND_3.jpg"),"rb")
+        bot.send_photo(message.chat.id, p)
+        bot.send_photo(message.chat.id, b)
+        bot.send_photo(message.chat.id, c)
+        bot.send_message(message.chat.id, "<b>Информация о номере!\n\nЦЕНА\nРезидентам:</b>\n350 000 сум\n\n<b>Не Резидентам:</b>\n400 000 сум\n\n"
+                                                                    "УСЛОВИЯ\n"
+                                                                    " <b>1.ЗАЕЗД-</b>"
+                                                                    " <ins>14:00.</ins>\n"
+                                                                    " <b>2.ВЫЕЗД-</b>"
+                                                                    " <ins>12:00.</ins>\n"
+                                                                    "<b>Семейные пары впускается при наличии ЗАГС!</b>\n\n"
+                                                                    "<b>Услуги и удобства:</b>\n\n"
+    "✔️|Завтрак\n✔️|Душ\n✔️|Детям до 5 лет проживание и завтрак бесплатно\n✔️|Полотенца\n✔️|Телевизор\n✔️|Кондиционер\n✔️|Туалет\n✔️|Собственная ванная комната\n✔️|Ежедневная уборка номера\n✔️|Отопление\n✔️|Гардеробная\n✔️|Ванна или душ\n✔️|Телевизор с плоским экраном\n✔️|Отдельный вход\n✔️|Звукоизоляция\n✔️|Вид из окна\n✔️|Шкаф или гардероб\n✔️|Вешалка для одежды\n✔️|Туалетная бумага\n✔️|Туалет с поручнями\n✔️|Корзины для мусора\n✔️|Шампунь\n✔️|Мыло\n✔️|Датчик дыма\n✔️|Окно", reply_markup=markup,parse_mode="html")
+
+    elif (message.text == "3️⃣"):
+        markup = types.ReplyKeyboardMarkup(row_width=1)
+        btn3 = types.KeyboardButton("/БРОНИРОВАНИЕ-3️⃣")
+        btn2 = types.KeyboardButton("НАЗАД!↩️")
+        markup.add(btn2,btn3) 
+        p = open(("D:\DIAMOND\FAMILY_TWIN\DIAMOND_1.jpg"),"rb")
+        d = open(("D:\DIAMOND\FAMILY_TWIN\DIAMOND_3.jpg"),"rb")
+        c = open(("D:\DIAMOND\FAMILY_TWIN\DIAMOND_4.jpg"),"rb")
+        bot.send_photo(message.chat.id, p)
+        bot.send_photo(message.chat.id, d)
+        bot.send_photo(message.chat.id, c)
+        bot.send_message(message.chat.id, "<b>Информация о номере:\n\nЦЕНА\nРезидентам:</b>\n400 000 сум\n\n<b>Не Резидентам:</b>\n450 000 сум\n\n<b>"
+                                                                    "УСЛОВИЯ\n"
+                                                                    " <b>1.ЗАЕЗД-</b>"
+                                                                    " <ins>14:00.</ins>\n"
+                                                                    " <b>2.ВЫЕЗД-</b>"
+                                                                    " <ins>12:00.</ins>\n"
+                                                                    "<b>Семейные пары впускается при наличии ЗАГС!</b>\n\n"
+                                                                    "Услуги и удобства:\n\n</b>"
+    "✔️|Завтрак\n✔️|Душ\n✔️|Детям до 5 лет проживание и завтрак бесплатно\n✔️|Полотенца\n✔️|Телевизор\n✔️|Кондиционер\n✔️|Туалет\n✔️|Собственная ванная комната\n✔️|Ежедневная уборка номера\n✔️|Отопление\n✔️|Гардеробная\n✔️|Ванна или душ\n✔️|Телевизор с плоским экраном\n✔️|Отдельный вход\n✔️|Звукоизоляция\n✔️|Вид из окна\n✔️|Шкаф или гардероб\n✔️|Вешалка для одежды\n✔️|Туалетная бумага\n✔️|Туалет с поручнями\n✔️|Корзины для мусора\n✔️|Шампунь\n✔️|Мыло\n✔️|Датчик дыма\n✔️|Окно", reply_markup=markup,parse_mode="html")
+    
+    elif (message.text == "4️⃣"):
+        markup = types.ReplyKeyboardMarkup(row_width=1)
+        btn3 = types.KeyboardButton("/БРОНИРОВАНИЕ-4️⃣")
+        btn2 = types.KeyboardButton("НАЗАД!↩️")
+        markup.add(btn2,btn3)    
+        p = open(("D:\DIAMOND\Triple_standart\DIAMOND_1.jpg"),"rb")
+        a = open(("D:\DIAMOND\Triple_standart\DIAMOND_3.jpg"),"rb")
+        d = open(("D:\DIAMOND\Triple_standart\DIAMOND_4.jpg"),"rb")
+        bot.send_photo(message.chat.id, p)
+        bot.send_photo(message.chat.id, d)
+        bot.send_photo(message.chat.id, a)
+        bot.send_message(message.chat.id, "<b>Информация о номере:\n\nЦЕНА\nРезидентам:</b>\n500 000 сум\n\n<b>Не Резидентам:</b>\n575 000 сум\n\n<b>"
+                                                                    "УСЛОВИЯ\n"
+                                                                    " <b>ЗАЕЗД-</b>"
+                                                                    " <ins>14:00.</ins>\n"
+                                                                    " <b>ВЫЕЗД-</b>"
+                                                                    " <ins>12:00.</ins>\n"
+                                                                    "<b>Семейные пары впускается при наличии ЗАГС!</b>\n\n"
+                                                                    "Услуги и удобства:\n\n</b>"
+    "✔️|Завтрак\n✔️|Душ\n✔️|Детям до 5 лет проживание и завтрак бесплатно\n✔️|Полотенца\n✔️|Телевизор\n✔️|Кондиционер\n✔️|Туалет\n✔️|Собственная ванная комната\n✔️|Ежедневная уборка номера\n✔️|Отопление\n✔️|Гардеробная\n✔️|Ванна или душ\n✔️|Телевизор с плоским экраном\n✔️|Отдельный вход\n✔️|Звукоизоляция\n✔️|Вид из окна\n✔️|Шкаф или гардероб\n✔️|Вешалка для одежды\n✔️|Туалетная бумага\n✔️|Туалет с поручнями\n✔️|Корзины для мусора\n✔️|Шампунь\n✔️|Мыло\n✔️|Датчик дыма\n✔️|Окно", reply_markup=markup,parse_mode="html")
+
+    elif (message.text == "5️⃣"):
+        markup = types.ReplyKeyboardMarkup(row_width=1)
+        btn3 = types.KeyboardButton("/БРОНИРОВАНИЕ-5️⃣")
+        btn2 = types.KeyboardButton("НАЗАД!↩️")
+        markup.add(btn2,btn3)
+        p = open(("D:\DIAMOND\Family_suite_room\DIAMOND_1.jpg"),"rb")
+        b = open(("D:\DIAMOND\Family_suite_room\DIAMOND_2.jpg"),"rb")
+        a = open(("D:\DIAMOND\Family_suite_room\DIAMOND_3.jpg"),"rb")
+        c = open(("D:\DIAMOND\Family_suite_room\DIAMOND_4.jpg"),"rb")
+        bot.send_photo(message.chat.id, p)
+        bot.send_photo(message.chat.id, b)
+        bot.send_photo(message.chat.id, a)
+        bot.send_photo(message.chat.id, c)
+        bot.send_message(message.chat.id,"<b>Информация о номере:\n\nЦЕНА\nРезидентам:</b>\n550 000 сум\n\n<b>Не Резидентам:</b>\n600 000 сум\n\n<b>"
+                                                                    "УСЛОВИЯ\n"
+                                                                    " <b>ЗАЕЗД-</b>"
+                                                                    " <ins>14:00.</ins>\n"
+                                                                    " <b>ВЫЕЗД-</b>"
+                                                                    " <ins>12:00.</ins>\n"
+                                                                    "<b>Семейные пары впускается при наличии ЗАГС!</b>\n\n"
+                                                                    "Услуги и удобства:\n\n</b>"
+    "✔️|Завтрак\n✔️|Душ\n✔️|Детям до 5 лет проживание и завтрак бесплатно\n✔️|Полотенца\n✔️|Телевизор\n✔️|Кондиционер\n✔️|Туалет\n✔️|Собственная ванная комната\n✔️|Ежедневная уборка номера\n✔️|Отопление\n✔️|Гардеробная\n✔️|Ванна или душ\n✔️|Телевизор с плоским экраном\n✔️|Отдельный вход\n✔️|Звукоизоляция\n✔️|Вид из окна\n✔️|Шкаф или гардероб\n✔️|Вешалка для одежды\n✔️|Туалетная бумага\n✔️|Туалет с поручнями\n✔️|Корзины для мусора\n✔️|Шампунь\n✔️|Мыло\n✔️|Датчик дыма\n✔️|Окно", reply_markup=markup,parse_mode="html")
+
+    elif (message.text == "6️⃣"):
+        markup = types.ReplyKeyboardMarkup(row_width=1)
+        btn3 = types.KeyboardButton("/БРОНИРОВАНИЕ-6️⃣")
+        btn2 = types.KeyboardButton("НАЗАД!↩️")
+        markup.add(btn2,btn3)
+        a = open(("D:\DIAMOND\lux\DIAMOND_3.jpg"),"rb")
+        e = open(("D:\DIAMOND\lux\DIAMOND_2.jpg"),"rb")
+        c = open(("D:\DIAMOND\lux\DIAMOND_4.jpg"),"rb")
+        d = open(("D:\DIAMOND\lux\DIAMOND_5.jpg"),"rb")
+        bot.send_photo(message.chat.id, d)
+        bot.send_photo(message.chat.id, e)
+        bot.send_photo(message.chat.id, a)
+        bot.send_photo(message.chat.id, c)
+        bot.send_message(message.chat.id,"<b>Информация о номере:\n\nЦЕНА\nРезидентам:</b>\n550 000 сум\n\n<b>Не Резидентам:</b>\n600 000 сум\n\n<b>"
+                                                                    "УСЛОВИЯ\n"
+                                                                    " <b>ЗАЕЗД-</b>"
+                                                                    " <ins>14:00.</ins>\n"
+                                                                    " <b>ВЫЕЗД-</b>"
+                                                                    " <ins>12:00.</ins>\n"
+                                                                    "<b>Семейные пары впускается при наличии ЗАГС!</b>\n\n"
+                                                                    "Услуги и удобства:\n\n</b>"
+    "✔️|Завтрак\n✔️|Душ\n✔️|Детям до 5 лет проживание и завтрак бесплатно\n✔️|Полотенца\n✔️|Телевизор\n✔️|Кондиционер\n✔️|Туалет\n✔️|Собственная ванная комната\n✔️|Ежедневная уборка номера\n✔️|Отопление\n✔️|Гардеробная\n✔️|Ванна или душ\n✔️|Телевизор с плоским экраном\n✔️|Отдельный вход\n✔️|Звукоизоляция\n✔️|Вид из окна\n✔️|Шкаф или гардероб\n✔️|Вешалка для одежды\n✔️|Туалетная бумага\n✔️|Туалет с поручнями\n✔️|Корзины для мусора\n✔️|Шампунь\n✔️|Мыло\n✔️|Датчик дыма\n✔️|Окно",reply_markup=markup,parse_mode="html")
+    
+    elif (message.text == "7️⃣"):
+        markup = types.ReplyKeyboardMarkup(row_width=1)
+        btn2 = types.KeyboardButton("НАЗАД!↩️")
+        markup.add(btn2,)
+        p = open(("D:\DIAMOND\conference_hall\DIAMOND_1.jpg"),"rb")
+        b = open(("D:\DIAMOND\conference_hall\DIAMOND_2.jpg"),"rb")
+        a = open(("D:\DIAMOND\conference_hall\DIAMOND_3.jpg"),"rb")
+        d = open(("D:\DIAMOND\conference_hall\DIAMOND_4.jpg"),"rb")
+        c = open(("D:\DIAMOND\conference_hall\DIAMOND_5.jpg"),"rb")
+        bot.send_photo(message.chat.id, p)
+        bot.send_photo(message.chat.id, b)
+        bot.send_photo(message.chat.id, a)
+        bot.send_photo(message.chat.id, d)
+        bot.send_photo(message.chat.id, c)
+        bot.send_message(message.chat.id, "ЗАЛ-КОФЕРЕНЦИИ") 
+
+    if (message.text == "БЫСТРАЯ БРОНЬ"):
+        bot.send_message(message.chat.id,"<b>ВЫБЕРИТЕ НОМЕР!</b>\n\n"
+                                                "<ins><b>НАЖМИТЕ ПО СИНЕЙ ПОЛЕ!</b></ins>\n\n"
+                                                "<b>ОДНОМЕСТНЫЙ-</b>/SINGLE_ROOM\n"
+                                                "<b>ДВУХМЕСТНЫЙ СТАНДАРТ-</b>/STANDART_TWIN\n"
+                                                "<b>ДВУХМЕСТНЫЙ ПОЛУ ЛЮКС-</b>/DELUXE_TWIN\n"
+                                                "<b>ТРЕХМЕСТНЫЙ СТАНДАРТ-</b>/TRIPLE_STANDART\n"
+                                                "<b>СЕМЕЙНЫЙ ЛЮКС-</b>/FAMILY_SUITE_ROOM\n"
+                                                "<b>ЛЮКС С БАЛКОНОМ-</b>/SUITE_WITH_BALCONY"
+                                                ,parse_mode="html")
+    else:
+        bot.send_message(message.chat_id, 'Простите, я вас не понял :(')
+
+bot.infinity_polling(skip_pending = True)
+bot.polling(none_stop=True)
